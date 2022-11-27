@@ -2,6 +2,7 @@
 #include <vector>
 #include <algorithm>
 #include <random>
+#include <set>
 #include "crypt.h"
 
 const int MAX_PLAYERS = 11;
@@ -96,8 +97,7 @@ card readCard(lli input) {
     return temp;
 }
 
-vector<lli> shuffleCards(player pl, vector<lli> cards, lli P) {
-    auto rng = default_random_engine {};
+vector<lli> shuffleCards(player pl, vector<lli> cards, lli P) {    auto rng = default_random_engine {};
     shuffle(begin(cards), std::end(cards), rng);
     vector<lli> shCards(cards.size());
     for (int i = 0; i < cards.size(); i++) {
@@ -140,7 +140,10 @@ card readEncCard(vector<player> deck, player pl, lli encCard, lli P) {
 }
 
 int main() {
+
+    vector<lli> duplCheck={};
     srand(time(NULL));
+
     vector<lli> cards(52);
     for (int i = 0; i < 52; i++) {
         cards.at(i) = i + 2;
@@ -169,6 +172,7 @@ int main() {
             while (!grabbed) {
                 int grab = rand() % cards.size();
                 if (cards.at(grab) > 0) {
+                    duplCheck.push_back(cards.at(grab));
                     i.hand[j] = cards.at(grab);
                     cards.at(grab) *= -1;
                     grabbed = true;
@@ -182,21 +186,51 @@ int main() {
     nlPrint("Cards" + to_string(cards.size()));
     nlPrint("Players");
     for (auto &i: deck) {
-        nlPrint(readEncCard(deck, i, i.hand[0], P).nameStr + " " + readEncCard(deck, i, i.hand[0], P).suitStr);
-        nlPrint(readEncCard(deck, i, i.hand[1], P).nameStr + " " + readEncCard(deck, i, i.hand[1], P).suitStr);
+        nlPrint(readEncCard(deck, i, i.hand[0], P).nameStr + " " + readEncCard(deck, i, i.hand[0], P).suitStr+"    "+readEncCard(deck, i, i.hand[1], P).nameStr + " " + readEncCard(deck, i, i.hand[1], P).suitStr);
+        cout<<"______________________________________________________________________________________";
+        //nlPrint();
         // nlPrint(readEncCard(deck,i,i.hand[1],P).number);
         //   nlPrint(readEncCard(deck,i,i.hand[0],P).number);
 
     }
-    nlPrint("Remaining cards");
-    for (auto &i: deck) {
-        cards = deshuffleCards(i, cards, P);
-    }
-    nlPrint("maining cards");
-    for (auto &i: cards) {
-        if (i > 0)
-            nlPrint(readCard(i).nameStr + " " + readCard(i).suitStr);
+    nlPrint("On Deck Cards________________________________________");
+    vector<lli> onDeckCards={};
+
+        for (int j = 0; j < 5; j++) {
+            bool grabbed = false;
+            while (!grabbed) {
+                int grab = rand() % cards.size();
+                if (cards.at(grab) > 0) {
+                    duplCheck.push_back(cards.at(grab));
+                     onDeckCards.push_back(cards.at(grab));
+                    cards.at(grab) *= -1;
+                    grabbed = true;
+                }
+            }
+
+
 
     }
+
+        onDeckCards= deshuffleCards(deck.at(0),onDeckCards,P);
+    for (auto &i: onDeckCards) {
+            cout<<"|"<<readCard(i).nameStr + " " + readCard(i).suitStr<<"|  ";
+    }
+    ////ПРОВЕРКА НА КОРРЕКТНОСТЬ ВЫБОРКИ И УДАЛЕНИЯ
+    duplCheck.insert(duplCheck.end(),cards.begin(),cards.end());
+    duplCheck= deshuffleCards(deck.at(0),duplCheck,P);
+//    nlPrint("Remaining cards"); q
+    duplCheck.erase(std::remove_if(
+            duplCheck.begin(),duplCheck.end(),
+            [](const lli& x) {
+                return x < 0; // put your condition here
+            }), duplCheck.end());
+//    for (auto &i: duplCheck) {
+//        if (i > 0)
+//            nlPrint(readCard(i).nameStr + " " + readCard(i).suitStr);
+//    }
+    set<int> s(duplCheck.begin(), duplCheck.end());
+    nlPrint("Cards in use "+ to_string(duplCheck.size()));
+    nlPrint("Unique cards on deck  "+ to_string(duplCheck.size()));
     return 0;
 }
